@@ -18,19 +18,60 @@ import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import useScanning from '../../hooks/useScanning';
+import {useLazyGetBatchCodeQuery} from '../../states/api/code';
+
+const initialState = {
+  product: '',
+  productName: '',
+  productDesc: '',
+  bomNo: '',
+  batchCode: '',
+  mainWONO: '',
+  curWO: '',
+  curOprCode: '',
+  curMC: '',
+  curOprSts: '',
+  blocked: '',
+  blockReason: '',
+  damaged: '',
+  damageNote: '',
+  curOprSeq: 0,
+  eqNo: '',
+  qcType: '',
+  lstQCSpec: [],
+};
 
 const StartFinishScreen = ({navigation}) => {
   const [code, setCode] = useState('');
-  const dataScan = useScanning();
+  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState(initialState);
+  const [getBatchCode] = useLazyGetBatchCodeQuery();
 
   const handleScanCode = async text => {
-    setCode(text);
     let arr = text.split(',');
-    console.log(arr.lenght);
-    if (arr.lenght === 8) {
-      console.log('Yes');
+    if (arr.length === 8) {
+      setIsLoading(true);
+      const product = arr[3];
+      const batchCode = arr[1];
+
+      try {
+        const {data, error} = await getBatchCode({
+          product,
+          batchCode,
+        });
+        console.log(data);
+        if (error) {
+          console.error('Error fetching batch code:', error);
+        } else {
+          setData({...data, product, batchCode});
+        }
+      } catch (error) {
+        console.error('Error fetching batch code:', error);
+      }
+
+      setIsLoading(false);
     } else {
-      console.log('NO');
+      setData(initialState);
     }
   };
 
@@ -51,11 +92,16 @@ const StartFinishScreen = ({navigation}) => {
         />
         <Text style={styles.headerTitle}>Start/Finish</Text>
       </View>
-      <Input
-        label="BatchCode"
-        value={code}
-        onChangeText={text => handleScanCode(text)}
-      />
+      <Input label="BatchCode" value={code} onChangeText={handleScanCode} />
+      {data.batchCode && (
+        <View style={styles.infoContainer}>
+          <View style={styles.infoTitleContainer}>
+            <Text style={styles.infoTitle}>BatchCode Information</Text>
+          </View>
+          <Text style={styles.infoText}>Product: {data.product}</Text>
+          <Text style={styles.infoText}>Batch Code: {data.batchCode}</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -81,40 +127,29 @@ const styles = StyleSheet.create({
     color: Colors.DEFAULT_WHITE,
     textTransform: 'uppercase',
   },
-  logoContainer: {
-    flexDirection: 'column',
-    alignItems: 'left',
+  infoContainer: {
+    marginTop: 20,
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
-  logo: {
-    width: 180,
-    height: 50,
-  },
-  version: {
-    paddingLeft: 10,
-    paddingBottom: 20,
-    marginTop: -5,
-  },
-  moduleContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 5,
-    paddingTop: 20,
-  },
-  module: {
-    backgroundColor: 'white',
-    padding: 10,
-    borderRadius: 10,
+  infoTitleContainer: {
+    backgroundColor: Colors.DEFAULT_GREEN,
+    width: '100%',
     alignItems: 'center',
-    flexDirection: 'column',
-    width: Display.setWidth(30),
-    height: Display.setHeight(20),
-    elevation: 3,
+    padding: 5,
   },
-  bookingText: {
+  infoTitle: {
+    fontSize: 18,
+    color: 'white',
+    fontFamily: Fonts.POPPINS_MEDIUM,
+  },
+  infoText: {
+    paddingHorizontal: 10,
+    fontSize: 15,
+    color: Colors.DEFAULT_BLACK,
+    fontFamily: Fonts.POPPINS_REGULAR,
     marginTop: 10,
-    fontSize: 13,
-    color: Colors.DEFAULT_RED,
-    textAlign: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.DEFAULT_GREY,
   },
 });
 

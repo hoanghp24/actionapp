@@ -1,20 +1,12 @@
-import {NavigationContainer} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
-import HomeScreen from './src/screens/HomeScreen';
-import BookingScreen from './src/screens/booking/BookingScreen';
-import StartFinishScreen from './src/screens/booking/StartFinishScreen';
-
-const Stack = createStackNavigator();
+import {Provider} from 'react-redux';
+import store from './src/states/store';
+import Navigator from './src/navigator';
 
 const App = () => {
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{headerShown: false}}>
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Booking" component={BookingScreen} />
-        <Stack.Screen name="StartFinish" component={StartFinishScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <Provider store={store}>
+      <Navigator />
+    </Provider>
   );
 };
 
